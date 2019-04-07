@@ -36,7 +36,8 @@ class StudentPlan:
             self.add_semester(position=min_position)
         for semester_index in range(min_position, len(self.semesters)):
             if not self.semesters[semester_index].is_full:
-                if self.semesters[semester_index].credit_hours + course.credit_hours <= self.semesters[semester_index].max_credits:
+                if self.semesters[semester_index].credit_hours + course.get_credit_hours() \
+                        <= self.semesters[semester_index].max_credits:
                     self.semesters[semester_index].add_course(course)
                     return semester_index
         semester = self.add_semester(position=len(self.semesters))
@@ -57,7 +58,10 @@ class Semester:
     def add_course(self, course):
         course.position = self.position
         self.courses.append(course)
-        self.credit_hours += course.credit_hours
+        if course.lab:
+            course.lab.position = self.position
+            self.courses.append(course.lab)
+        self.credit_hours += course.get_credit_hours()
         self.is_full = self.credit_hours >= self.max_credits
 
     def __repr__(self):
