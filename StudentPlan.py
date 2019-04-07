@@ -37,6 +37,11 @@ class StudentPlan:
         self.semesters.append(semester)
         return semester
 
+    def force_accommodate(self, position, course):
+        if not self.get_semester(position):
+            new_semester = self.add_semester(position)
+            new_semester.add_course(course)
+
     def get_semester(self, position):
         for semester in self.semesters:
             if semester.position == position:
@@ -82,7 +87,6 @@ class Semester:
     year = property(get_year)
 
     def __repr__(self):
-        # return f'Semester{self.position}, Courses: {self.courses}'
         if self.position > 0:
             return f'Semester: year:{ self.year }  semester: {2 if self.position % 2 == 0 else 1},' \
             f' Courses: {self.courses}'
@@ -91,6 +95,7 @@ class Semester:
 
 
 if __name__ == '__main__':
+    # Example Use
     ciic = import_curriculum('CIIC')
     my_past_semesters = {
         '0': ['INGL3--1', 'ESPA3101', 'MATE3005', 'INGL3--2', 'ESPA3102'],
@@ -100,25 +105,6 @@ if __name__ == '__main__':
         '4': ['CIIC4010', 'CIIC3075', 'INGL3212', 'FREE---1'],
     }
     plan = StudentPlan(curriculum=ciic, max_credits=16, past_semesters=my_past_semesters)
-    # for semester_index in range(5):
-    #     semester = plan.add_semester(semester_index, past=True)
-    #     if semester_index == 0:
-    #         for course in ['INGL3--1', 'ESPA3101', 'MATE3005', 'INGL3--2', 'ESPA3102']:
-    #             semester.add_course(ciic.get_course(course))
-    #     if semester_index == 1:
-    #         for course in ['MATE3031', 'QUIM3131', 'INGL3211', 'INGE3011', 'SOHU1111']:
-    #             semester.add_course(ciic.get_course(course))
-    #     if semester_index == 2:
-    #         for course in ['MATE3032', 'QUIM3132', 'CIIC3011', 'EDFI---1', 'EDFI---2']:
-    #             semester.add_course(ciic.get_course(course))
-    #     if semester_index == 3:
-    #         for course in ['CIIC5--1', 'CIIC5--2']:
-    #             semester.add_course(ciic.get_course(course))
-    #     if semester_index == 4:
-    #         for course in c:
-    #             semester.add_course(ciic.get_course(course))
-
-    # semester = plan.add_semester(6)
-    # semester.add_course(ciic.get_course('MATE3063'))
+    plan.force_accommodate(6, ciic.get_course('MATE3063'))
     for semester in plan.build_plan():
         print(semester, semester.credit_hours)
