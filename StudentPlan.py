@@ -52,11 +52,9 @@ class StudentPlan:
             self.add_semester(position=min_position)
         self.semesters = sorted(self.semesters, key=lambda s: s.position,)
         for semester_index in range(min_position, len(self.semesters)):
-            if not self.semesters[semester_index].is_full and not self.semesters[semester_index].past:
-                if self.semesters[semester_index].credit_hours + course.get_credit_hours() \
-                        <= self.semesters[semester_index].max_credits:
-                    self.semesters[semester_index].add_course(course)
-                    return semester_index
+            if self.semesters[semester_index].course_valid(course):
+                self.semesters[semester_index].add_course(course)
+                return semester_index
         semester = self.add_semester(position=len(self.semesters))
         semester.add_course(course)
         return semester.position
@@ -71,6 +69,15 @@ class Semester:
         self.position = position
         self.courses = list()
         self.past = past
+
+    def course_valid(self, course):
+        if not self.is_full and not self.past and self.credit_hours + course.get_credit_hours() <= self.max_credits:
+            if course.season == 2:
+                return self.position % 2 == 0
+            elif course.season == 1:
+                return self.position % 2 == 1
+            else:
+                return True
 
     def add_course(self, course):
         course.position = self.position

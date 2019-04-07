@@ -22,7 +22,8 @@ def import_curriculum(name):
             lab = Course(department=line[4][:4], code=line[4][4:], credit_hours=1)
             curriculum.courses.append(lab)
             course.lab = lab
-
+        if line[5] != '--------':
+            course.season = int(line[5][-1])
     return curriculum
 
 

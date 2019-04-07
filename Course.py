@@ -1,6 +1,6 @@
 class Course:
 
-    def __init__(self, credit_hours, department, code, pre_requisites=None, co_requisites=None):
+    def __init__(self, credit_hours, department, code, pre_requisites=None, co_requisites=None, season=None):
         self.course_id = department + code
         self.credit_hours = credit_hours
         self.department = department
@@ -15,6 +15,7 @@ class Course:
             self.co_requisites = co_requisites
         self.position = None
         self.lab = None
+        self.season = season
 
     def get_level(self):
         level = 1
