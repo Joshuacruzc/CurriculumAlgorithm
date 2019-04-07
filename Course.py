@@ -13,6 +13,7 @@ class Course:
             self.co_requisites = list()
         else:
             self.co_requisites = co_requisites
+        self.position = None
 
     def get_level(self):
         level = 1
@@ -21,6 +22,8 @@ class Course:
             if inner_level >= level:
                 level = inner_level + 1
         return level
+
+    level = property(get_level)
 
     def __repr__(self):
         return self.course_id
