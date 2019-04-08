@@ -9,9 +9,12 @@ class StudentPlan:
         self.curriculum = curriculum
         self.max_credits = max_credits
         if past_semesters is not None:
-            for past_semester_key in past_semesters.keys():
-                past_semester = self.add_semester(int(past_semester_key), past=True)
-                courses_to_add = past_semesters[past_semester_key]
+            for semester_position in range(max(past_semesters.keys())+1):
+                past_semester = self.add_semester(semester_position, past=True)
+                try:
+                    courses_to_add = past_semesters[semester_position]
+                except KeyError:
+                    continue
                 for course in courses_to_add:
                     past_semester.add_course(curriculum.get_course(course))
 
@@ -105,13 +108,21 @@ if __name__ == '__main__':
     # Example Use
     ciic = import_curriculum('CIIC')
     my_past_semesters = {
-        '0': ['INGL3--1', 'ESPA3101', 'MATE3005', 'INGL3--2', 'ESPA3102'],
-        '1': ['MATE3031', 'QUIM3131', 'INGL3211', 'INGE3011', 'SOHU1111'],
-        '2': ['MATE3032', 'QUIM3132', 'CIIC3011', 'EDFI---1', 'EDFI---2'],
-        '3': ['CIIC5--1', 'CIIC5--2'],
-        '4': ['CIIC4010', 'CIIC3075', 'INGL3212', 'FREE---1'],
+        0: ['INGL3--1', 'ESPA3101', 'MATE3005', 'INGL3--2', 'ESPA3102'],
+        1: ['MATE3031', 'QUIM3131', 'INGL3211', 'INGE3011', 'SOHU1111'],
+        2: ['MATE3032', 'QUIM3132', 'CIIC3011', 'EDFI---1', 'EDFI---2'],
+        3: ['CIIC5--1', 'CIIC5--2'],
+        4: ['CIIC4010', 'CIIC3075', 'INGL3212', 'FREE---1'],
     }
-    plan = StudentPlan(curriculum=ciic, max_credits=16, past_semesters=my_past_semesters)
-    plan.force_accommodate(6, ciic.get_course('MATE3063'))
+    everson_semester = {
+        1: ['MATE3005', 'QUIM3131', 'INGL3--1', 'INGE3011', 'ESPA3101'],
+        2: ['MATE3031', 'QUIM3132', 'INGL3--2', 'EDFI---1', 'EDFI---2', 'ESPA3102'],
+        3: ['MATE3032', 'CIIC3011', 'FISI3171', 'INGL3211'],
+        4: ['MATE3063', 'CIIC4010', 'CIIC3075', 'FISI3172', 'INGL3212'],
+        5: ['CIIC4020', 'MATE4145', 'INEL3105', 'INGE3035'],
+        6: ['CIIC5--1']
+    }
+    plan = StudentPlan(curriculum=ciic, max_credits=16, past_semesters=everson_semester)
+    # plan.force_accommodate(6, ciic.get_course('MATE3063'))
     for semester in plan.build_plan():
         print(semester, semester.credit_hours)
