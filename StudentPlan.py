@@ -11,10 +11,7 @@ class StudentPlan:
         if past_semesters is not None:
             for semester_position in range(max(past_semesters.keys())+1):
                 past_semester = self.add_semester(semester_position, past=True)
-                try:
-                    courses_to_add = past_semesters[semester_position]
-                except KeyError:
-                    continue
+                courses_to_add = past_semesters.get(semester_position, None)
                 for course in courses_to_add:
                     past_semester.add_course(curriculum.get_course(course))
 
