@@ -14,6 +14,7 @@ class Course:
         else:
             self.co_requisites = co_requisites
         self.position = None
+        self.lab = None
 
     def get_level(self):
         level = 1
@@ -23,6 +24,8 @@ class Course:
                 level = inner_level + 1
         return level
 
+    def get_credit_hours(self):
+        return self.credit_hours + self.lab.credit_hours if self.lab else self.credit_hours
     level = property(get_level)
 
     def __repr__(self):

@@ -18,6 +18,11 @@ def import_curriculum(name):
             courses = line[3].split(',')
             for prereq in courses:
                 course.pre_requisites.append(curriculum.get_course(prereq))
+        if line[4] != '--------':
+            lab = Course(department=line[4][:4], code=line[4][4:], credit_hours=1)
+            curriculum.courses.append(lab)
+            course.lab = lab
+
     return curriculum
 
 
