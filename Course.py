@@ -1,10 +1,11 @@
 class Course:
 
-    def __init__(self, credit_hours, department, code, pre_requisites=None, co_requisites=None, season=None):
+    def __init__(self, credit_hours, department, code, difficulty=0, pre_requisites=None, co_requisites=None, season=None):
         self.course_id = department + code
         self.credit_hours = credit_hours
         self.department = department
         self.code = code
+        self.difficulty = difficulty
         if pre_requisites is None:
             self.pre_requisites = list()
         else:
@@ -28,6 +29,9 @@ class Course:
     def get_credit_hours(self):
         return self.credit_hours + self.lab.credit_hours if self.lab else self.credit_hours
     level = property(get_level)
+
+    def get_difficulty(self):
+        return self.difficulty + self.lab.difficulty if self.lab else self.difficulty
 
     def __repr__(self):
         return self.course_id

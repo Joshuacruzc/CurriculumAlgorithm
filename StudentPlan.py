@@ -1,3 +1,4 @@
+from Semester import Semester
 from import_curriculum import import_curriculum
 
 
@@ -5,15 +6,18 @@ class StudentPlan:
 
     semesters = []
 
-    def __init__(self, curriculum, max_credits, past_semesters=None):
+    def __init__(self, curriculum, max_credits, max_difficulty=10, past_semesters=None):
+        self.max_difficulty = max_difficulty
         self.curriculum = curriculum
         self.max_credits = max_credits
         if past_semesters is not None:
             for semester_position in range(max(past_semesters.keys())+1):
                 past_semester = self.add_semester(semester_position, past=True)
-                courses_to_add = past_semesters.get(semester_position, None)
+                courses_to_add = past_semesters.get(semester_position, [])
                 for course in courses_to_add:
                     past_semester.add_course(curriculum.get_course(course))
+        else:
+            self.add_semester(0, past=True)
 
     def build_plan(self):
         sorted_courses = sorted(self.curriculum.courses, key=lambda c: c.level, reverse=True)
@@ -33,7 +37,8 @@ class StudentPlan:
         return min_position + 1 if not correq else course.position
 
     def add_semester(self, position, past=False):
-        semester = Semester(max_credits=self.max_credits, position=position, past=past)
+        semester = Semester(max_credits=self.max_credits, max_difficulty=self.max_difficulty,
+                            position=position, past=past)
         self.semesters.append(semester)
         return semester
 
@@ -60,47 +65,6 @@ class StudentPlan:
         return semester.position
 
 
-class Semester:
-    is_full = False
-    credit_hours = 0
-
-    def __init__(self, max_credits, position, past=False):
-        self.max_credits = max_credits
-        self.position = position
-        self.courses = list()
-        self.past = past
-
-    def course_valid(self, course):
-        if not self.is_full and not self.past and self.credit_hours + course.get_credit_hours() <= self.max_credits:
-            if course.season == 2:
-                return self.position % 2 == 0
-            elif course.season == 1:
-                return self.position % 2 == 1
-            else:
-                return True
-
-    def add_course(self, course):
-        course.position = self.position
-        self.courses.append(course)
-        if course.lab:
-            course.lab.position = self.position
-            self.courses.append(course.lab)
-        self.credit_hours += course.get_credit_hours()
-        self.is_full = self.credit_hours >= self.max_credits
-
-    def get_year(self):
-        return int(self.position/2) if self.position % 2 == 0 else self.position//2 + 1
-
-    year = property(get_year)
-
-    def __repr__(self):
-        if self.position > 0:
-            return f'Semester: year:{ self.year }  semester: {2 if self.position % 2 == 0 else 1},' \
-            f' Courses: {self.courses}'
-        else:
-            return f'Before College: Courses{self.courses}'
-
-
 if __name__ == '__main__':
     # Example Use
     ciic = import_curriculum('CIIC')
@@ -119,7 +83,7 @@ if __name__ == '__main__':
         5: ['CIIC4020', 'MATE4145', 'INEL3105', 'INGE3035'],
         6: ['CIIC5--1']
     }
-    plan = StudentPlan(curriculum=ciic, max_credits=16, past_semesters=everson_semester)
+    plan = StudentPlan(curriculum=ciic, max_credits=16, past_semesters=my_past_semesters)
     # plan.force_accommodate(6, ciic.get_course('MATE3063'))
     for semester in plan.build_plan():
-        print(semester, semester.credit_hours)
+        print(semester, semester.credit_hours, semester.calculate_difficulty())
