@@ -1,95 +1,112 @@
-from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
-from CurriculumAlgorithmWebApp import settings
-
-MAXIMUM_SEMESTER_CREDITS = 21
-
-DEPARTMENT_CHOICES = [
-    ('INSO', 'Software Engineering'),
-    ('CIIC', 'Computer Science and Engineering'),
-]
-
 POSITION_CHOICES = [
-    ('0', 'Fall'),
-    ('1', 'Spring'),
-    ('2', 'Summer'),
-    ('3', 'Always'),
+    ('0', 'Any'),
+    ('1', 'Fall'),
+    ('2', 'Spring'),
 ]
 
 
 class Course(models.Model):
-
-    # TODO: Add pre-requisite and co-requisite. What is "position" field?
-    code = models.CharField(max_length=4)
+    course_number = models.CharField(max_length=8, unique=True)
     season = models.CharField(max_length=1, choices=POSITION_CHOICES)
-    department = models.CharField(max_length=4, choices=DEPARTMENT_CHOICES)
     credit_hours = models.IntegerField(default=0)
-
-    @property
-    def course_id(self):
-        return '%s%s' % (self.department, self.code)
+    laboratory = models.ForeignKey('Course', null=True, on_delete=models.SET_NULL, related_name='main_course')
 
     def __str__(self):
-        return self.course_id
-
-    def get_credit_hours(self):
-        if hasattr(self, 'laboratory'):
-            return self.credit_hours + self.laboratory.credit_hours
-        else:
-            return self.credit_hours
-
-    # def get_level(self):
-    #     level = 1
-    #     for course in self.pre_requisites:
-    #         inner_level = course.get_level()
-    #         if inner_level >= level:
-    #             level = inner_level + 1
-    #     return level
-
-
-# TODO: co-requisite and laboratory are special types of courses?
-class Laboratory(Course):
-    course = models.OneToOneField(Course, on_delete=models.CASCADE)
+        return self.course_number
 
 
 class Curriculum(models.Model):
-    courses = models.ManyToManyField(Course, related_name='courses')
-    department = models.CharField(max_length=4, choices=DEPARTMENT_CHOICES)
+    name = models.CharField(max_length=50, unique=True)
+    department = models.CharField(max_length=50)
+    courses = models.ManyToManyField(Course, through='CurriculumCourse')
 
-    def get_concentration_courses(self):
-        return [course for course in self.courses.all() if course.department == self.department]
+    def __str__(self):
+        return self.name
 
-    def get_course(self, course_id):
-        for course in self.courses.all():
-            if course.course_id == course_id:
-                return course
-        return None
 
-    def get_total_credit_hours(self):
-        credit_hours = 0
-        for course in self.courses.all():
-            credit_hours += course.credit_hours
-        return credit_hours
+class CurriculumCourse(models.Model):
+    course = models.ForeignKey(Course, on_delete=models.CASCADE)
+    curriculum = models.ForeignKey(Curriculum, on_delete=models.CASCADE)
+    pre_requisites = models.ManyToManyField('self', related_name='bops', symmetrical=False)
+    co_requisites = models.ManyToManyField("self", related_name='enmendated_bops', symmetrical=False)
+    level = models.IntegerField(default=0)
 
-    # def get_minimun_semester_count(self):
-    #     max_level = 0
-    #     for course in self.courses.all():
-    #         max_level = max(max_level, course.get_level())
-    #     return max_level
+    def add_pre_requisite(self, curriculum_course):
+        self.pre_requisites.add(curriculum_course)
+        self.level = max(self.level, curriculum_course.level) + 1
+        self.save()
+
+    def get_credit_hours(self):
+        return self.course.credit_hours + self.course.laboratory.credit_hours \
+            if self.course.laboratory else self.course.credit_hours
+
+    def __str__(self):
+        return f'{self.curriculum.name}: {self.course.course_number}'
 
 
 class Semester(models.Model):
-    is_full = models.BooleanField(default=False, null=True)
-    past = models.BooleanField(default=False, null=True)
-    credit_hours = models.IntegerField(default=0)
-    max_credits = models.IntegerField(validators=[
-        MaxValueValidator(22, settings.ERROR_MESSAGES['semester_credits']['max_semester_credits']),
-        MinValueValidator(11, settings.ERROR_MESSAGES['semester_credits']['min_semester_credits'])])
+    student_plan = models.ForeignKey('StudentPlan', on_delete=models.CASCADE)
+    curriculum_courses = models.ManyToManyField(CurriculumCourse)
+    is_full = models.BooleanField(default=False)
+    past = models.BooleanField(default=False)
+    max_credits = models.IntegerField()
     position = models.IntegerField(default=0)
+    credit_hours = models.IntegerField(default=0)
 
-    def get_year(self):
-        return int(self.position/2) if self.position % 2 == 0 else self.position//2 + 1
-    year = property(get_year)
+    def __str__(self):
+        courses = [course.__str__() + '\n' for course in self.curriculum_courses.all()]
+        return ''.join(courses)
+
+    def add_curriculum_course(self, curriculum_course):
+        self.curriculum_courses.add(curriculum_course)
+        if curriculum_course.course.laboratory:
+            self.curriculum_courses.add(curriculum_course)
+        self.credit_hours += curriculum_course.get_credit_hours()
+        self.is_full = self.credit_hours >= self.max_credits
+        self.save()
+
+    def course_valid(self, curriculum_course):
+        if not self.is_full and not self.past \
+                and self.credit_hours + curriculum_course.get_credit_hours() <= self.max_credits:
+            if curriculum_course.course.season == 2:
+                return self.position % 2 == 0
+            elif curriculum_course.course.season == 1:
+                return self.position % 2 == 1
+            else:
+                return True
 
 
+class StudentPlan(models.Model):
+    max_credits = models.IntegerField(default=0)
+    curriculum = models.ForeignKey(Curriculum, on_delete=models.SET_NULL, null=True)
+
+    def build_plan(self):
+        for course in CurriculumCourse.objects.filter(curriculum=self.curriculum).order_by('-level'):
+            self.accommodate(course)
+        return self.semester_set
+
+    def accommodate(self, curriculum_course, is_co_requisite=False):
+        if curriculum_course in CurriculumCourse.objects.filter(semester__in=self.semester_set.all()):
+            return curriculum_course.semester_set.last().position + 1\
+                if not is_co_requisite else curriculum_course.semester_set.last().position
+        min_position = 0
+        for pre_requisite in curriculum_course.pre_requisites.all():
+            min_position = max(min_position, self.accommodate(pre_requisite))
+        for co_requisite in curriculum_course.co_requisites.all():
+            min_position = max(min_position, self.accommodate(co_requisite, is_co_requisite=True))
+        min_position = self.set_to_earliest_possible_semester(min_position=min_position,
+                                                              curriculum_course=curriculum_course)
+        return min_position + 1 if not is_co_requisite else min_position
+
+    def set_to_earliest_possible_semester(self, curriculum_course, min_position):
+        if not self.semester_set.filter(position=min_position).exists():
+            Semester.objects.create(student_plan=self, max_credits=self.max_credits, position=min_position)
+        for semester in self.semester_set.filter(position__gte=min_position).order_by('position'):
+            if semester.course_valid(curriculum_course):
+                semester.add_curriculum_course(curriculum_course)
+                return semester.position
+        new_semester = Semester.objects.create(student_plan=self, max_credits=self.max_credits,
+                                               position=self.semester_set.count())  # consider using max aggregate
+        return new_semester.position
