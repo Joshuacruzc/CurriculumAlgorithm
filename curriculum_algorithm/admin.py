@@ -16,12 +16,17 @@ class CurriculumAdmin(admin.ModelAdmin):
 
 
 class SemesterInline(admin.TabularInline):
-    fields = ['curriculum_courses', 'position',  'past']
+    fields = ['curriculum_courses', 'credit_hours', 'position',  'past']
     fk_name = 'student_plan'
     model = Semester
+    extra = 0
 
 
 @admin.register(StudentPlan)
 class StudentPlanAdmin(admin.ModelAdmin):
     fields = ['max_credits', 'curriculum']
     inlines = [SemesterInline]
+
+    def save_model(self, request, obj, form, change):
+        super(StudentPlanAdmin, self).save_model(request, obj, form, change)
+        obj.build_plan()

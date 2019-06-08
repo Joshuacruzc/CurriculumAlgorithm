@@ -55,9 +55,9 @@ class Semester(models.Model):
     position = models.IntegerField(default=0)
     credit_hours = models.IntegerField(default=0)
 
-    def __str__(self):
-        courses = [course.__str__() + '\n' for course in self.curriculum_courses.all()]
-        return ''.join(courses)
+    # def __str__(self):
+    #     courses = [course.__str__() + '\n' for course in self.curriculum_courses.all()]
+    #     return ''.join(courses)
 
     def add_curriculum_course(self, curriculum_course):
         self.curriculum_courses.add(curriculum_course)
@@ -83,9 +83,19 @@ class StudentPlan(models.Model):
     curriculum = models.ForeignKey(Curriculum, on_delete=models.SET_NULL, null=True)
 
     def build_plan(self):
-        for course in CurriculumCourse.objects.filter(curriculum=self.curriculum).order_by('-level'):
+        self.semester_set.filter(past=False).delete()
+        for course in CurriculumCourse.objects.filter(curriculum=self.curriculum)\
+                .exclude(semester__in=self.semester_set.all()).order_by('-level'):
             self.accommodate(course)
         return self.semester_set
+
+    def force_accommodate(self, position, curriculum_course):
+        target_semester = self.semester_set.filter(position=position).first()
+        if not target_semester:
+            target_semester = Semester.objects.create(student_plan=self, max_credits=self.max_credits,
+                                                      position=position)
+
+        target_semester.add_course(curriculum_course)
 
     def accommodate(self, curriculum_course, is_co_requisite=False):
         if curriculum_course in CurriculumCourse.objects.filter(semester__in=self.semester_set.all()):
