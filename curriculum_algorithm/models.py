@@ -62,7 +62,7 @@ class Semester(models.Model):
     def add_curriculum_course(self, curriculum_course):
         self.curriculum_courses.add(curriculum_course)
         if curriculum_course.course.laboratory:
-            self.curriculum_courses.add(curriculum_course)
+            self.curriculum_courses.add(CurriculumCourse.objects.get(course=curriculum_course.course.laboratory))
         self.credit_hours += curriculum_course.get_credit_hours()
         self.is_full = self.credit_hours >= self.max_credits
         self.save()
@@ -94,8 +94,7 @@ class StudentPlan(models.Model):
         if not target_semester:
             target_semester = Semester.objects.create(student_plan=self, max_credits=self.max_credits,
                                                       position=position)
-
-        target_semester.add_course(curriculum_course)
+        target_semester.add_curriculum_5course(curriculum_course)
 
     def accommodate(self, curriculum_course, is_co_requisite=False):
         if curriculum_course in CurriculumCourse.objects.filter(semester__in=self.semester_set.all()):
@@ -119,4 +118,5 @@ class StudentPlan(models.Model):
                 return semester.position
         new_semester = Semester.objects.create(student_plan=self, max_credits=self.max_credits,
                                                position=self.semester_set.count())  # consider using max aggregate
+        new_semester.add_curriculum_course(curriculum_course)
         return new_semester.position
