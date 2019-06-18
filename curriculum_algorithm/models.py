@@ -51,7 +51,7 @@ class Semester(models.Model):
     curriculum_courses = models.ManyToManyField(CurriculumCourse)
     is_full = models.BooleanField(default=False)
     past = models.BooleanField(default=False)
-    max_credits = models.IntegerField()
+    max_credits = models.PositiveIntegerField()
     position = models.IntegerField(default=0)
     credit_hours = models.IntegerField(default=0)
 
