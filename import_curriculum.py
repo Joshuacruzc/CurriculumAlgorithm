@@ -1,29 +1,35 @@
-from Course import Course
-from Curriculum import Curriculum
+import os
+import django
+os.environ['DJANGO_SETTINGS_MODULE'] = 'CurriculumAlgorithmWebApp.settings'
+django.setup()
+from curriculum_algorithm.models import CurriculumCourse, Course
+from curriculum_algorithm.models import Curriculum
 
 
 def import_curriculum(name):
     file = open(name + '.txt', 'r')
-    curriculum = Curriculum(department=name)
+    curriculum = Curriculum.objects.create(name=name)
     for line in file:
         line = line.split()
         print(line)
-        course = Course(department=line[0][:4], code=line[0][4:], credit_hours=int(line[1]))
-        curriculum.courses.append(course)
+        course = CurriculumCourse.objects.create(curriculum=curriculum, course=Course.objects.create(course_number=line[0], credit_hours=int(line[1])))
         if line[2] != '--------':
             courses = line[2].split(',')
             for correq in courses:
-                course.co_requisites.append(curriculum.get_course(correq))
+                course.co_requisites.add(CurriculumCourse.objects.filter(course__course_number=correq, curriculum=curriculum).first())
         if line[3] != '--------':
             courses = line[3].split(',')
             for prereq in courses:
-                course.pre_requisites.append(curriculum.get_course(prereq))
+                course.add_pre_requisite(CurriculumCourse.objects.filter(course__course_number=prereq, curriculum=curriculum).first())
         if line[4] != '--------':
-            lab = Course(department=line[4][:4], code=line[4][4:], credit_hours=1)
-            curriculum.courses.append(lab)
-            course.lab = lab
+            lab = CurriculumCourse.objects.create(curriculum=curriculum, course=Course.objects.create(course_number=line[4], credit_hours=1))
+            course.course.laboratory = lab.course
+            course.course.save()
         if line[5] != '--------':
-            course.season = int(line[5][-1])
+            course.course.season = int(line[5][-1])
+            course.course.save()
+        course.save()
+
     return curriculum
 
 
