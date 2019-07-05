@@ -5,7 +5,6 @@ from .views import CreateStudentPlanView, SemestersView, RetrieveUpdateStudentPl
 
 urlpatterns = {
     url(r'^create_student_plan/$', CreateStudentPlanView.as_view(), name="create_student_plan"),
-    path('view_semester/<int:pk>/', SemestersView.as_view(), name='semester'),
     path('view_student_plan/<int:pk>/', RetrieveUpdateStudentPlanView.as_view(), name='semester'),
     path('transfer_course/', transfer_course, name='transfer_course')
 }

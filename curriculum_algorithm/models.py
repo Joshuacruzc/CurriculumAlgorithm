@@ -82,6 +82,11 @@ class StudentPlan(models.Model):
     max_credits = models.IntegerField(default=0)
     curriculum = models.ForeignKey(Curriculum, on_delete=models.SET_NULL, null=True)
 
+    @property
+    def remaining_courses(self):
+        return CurriculumCourse.objects.filter(curriculum=self.curriculum)\
+                .exclude(semester__in=self.semester_set.all()).order_by('-level')
+
     def build_plan(self):
         self.semester_set.filter(past=False).delete()
         for course in CurriculumCourse.objects.filter(curriculum=self.curriculum)\

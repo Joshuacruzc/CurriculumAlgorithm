@@ -28,6 +28,7 @@ class SemesterSerializer(serializers.ModelSerializer):
 class StudentPlanSerializer(serializers.ModelSerializer):
     """Serializer to map the Model instance into JSON format."""
     semester_set = SemesterSerializer(many=True)
+    remaining_courses = CurriculumCourseSerializer(many=True)
 
     class Meta:
         """Meta class to map serializer's fields with the model fields."""

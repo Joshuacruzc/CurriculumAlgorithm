@@ -8,16 +8,21 @@ from curriculum_algorithm.serializers import StudentPlanSerializer, SemesterSeri
 
 @api_view(['POST'])
 def transfer_course(request):
-    if request.method == 'POST':
-        data = request.POST
-        semester = Semester.objects.get(pk=data['source_semester'])
+    data = request.POST
+    source_semester_pk = data.get('source_semester', None)
+    destination_semester_pk = data.get('new_semester', None)
+    course = CurriculumCourse.objects.get(pk=data['course_id'])
+    updated_semesters = []
+    if source_semester_pk is not None:
+        source_semester = Semester.objects.get(pk=source_semester_pk)
+        source_semester.curriculum_courses.remove(course)
+        updated_semesters.append(source_semester_pk)
+    if destination_semester_pk is not None:
         new_semester = Semester.objects.get(pk=data['new_semester'])
-        course = CurriculumCourse.objects.get(pk=data['course_id'])
-        semester.curriculum_courses.remove(course)
         new_semester.curriculum_courses.add(course)
-        bops = Semester.objects.filter(id__in=[new_semester.id, semester.id])
-        return Response(SemesterSerializer(bops, many=True).data)
-    return Response({"message": "Hello, world!"})
+        updated_semesters.append(destination_semester_pk)
+    result = Semester.objects.filter(id__in=updated_semesters)
+    return Response(SemesterSerializer(result, many=True).data)
 
 
 class CreateStudentPlanView(generics.CreateAPIView):
