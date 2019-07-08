@@ -11,7 +11,6 @@ def import_curriculum(name):
     curriculum = Curriculum.objects.create(name=name)
     for line in file:
         line = line.split()
-        print(line)
         course = CurriculumCourse.objects.create(curriculum=curriculum, course=Course.objects.create(course_number=line[0], credit_hours=int(line[1])))
         if line[2] != '--------':
             courses = line[2].split(',')
