@@ -132,3 +132,7 @@ ERROR_MESSAGES = {
         'min_semester_credits': 'Minimum number of credits required'
     }
 }
+# Configure Django App for Heroku.
+import django_heroku
+
+django_heroku.settings(locals())
