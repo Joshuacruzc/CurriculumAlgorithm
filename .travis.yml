@@ -1,9 +1,16 @@
 language: python
 python:
-  - "3.7-dev"
+  - 3.7-dev
 install:
   - pip install -r requirements.txt
 before_script:
   - python manage.py makemigrations curriculum_algorithm
 script:
   - python manage.py test
+deploy:
+  provider: heroku
+  api_key:
+    secure: H+PJfzhOkgjcabdx1PwiRBibdEZpxhyYjKmzw9xXXllXdkN5ryuyLMiXjZduIoBDvIAsNus8E3Pv9S4fECBooY/5l8uGkDeKO/l2fQkA5nWLm1qwzUcfyr3ylIWsCgvj3kloylmhnHP/VCQwES0X4YOWwGEY7yhjsPy2X1l2Gug8PCCBmZQkV5Vfdz+mv38UyuT+lM86RDzaNOVeUGv7+KwGux0IBM5IXusgaVdEltXlJJWYUKFRQu+deyM0KaSxB+jQ2OzKTv7VBaA+9nEqonlhFzORLsvxRHAikkfRucoUmm9evEtIKfaBK544l/xBFH/AKFrtyBShYwrWOVkdpX7r1uCQUbClY+e9cSCHdybwQuZI+1GmicxXONvhmWef8roVwnacr1NCxn4knSCwrh3zdSp/PgrAhG8BsATVgSoLGB6VifFxfU5gjhCvvdUWhGiToYw4V0ev+2cyYCdRvdDDdEuYRYgScP9E5sAI+n0rMeN/74n/yl1dZ6gmylPeooXc6JzslZ4VoD8mgGRqGVzhvxcZw6Uv4CG76FHaqRGGx6CvKIbwEksh4JT6Woka+C43KyizTWA0ogFW8c7Pfjrr8iF8za7T2W4omY7FTmcPxG6qT9SxNrklo4mEmJPtJ6WcIZZfgOV6+Jss6G/UJS7qQH3hr1h9y102XtD2zac=
+  app: CurriculumAlgorithm
+  on:
+    repo: Joshuacruzc/CurriculumAlgorithm
