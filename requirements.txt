@@ -2,5 +2,4 @@ psycopg2
 django
 djangorestframework
 django-cors-headers
-django-heroku
 gunicorn

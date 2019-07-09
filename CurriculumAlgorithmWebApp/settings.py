@@ -25,7 +25,7 @@ SECRET_KEY = '8(xg762^kfjmyxsw^d=n)yr59d_f1v&+s%-*6z7$(1#r!*o4p)'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['curriculum-algorithm.herokuapp.com']
 
 
 # Application definition
@@ -132,8 +132,3 @@ ERROR_MESSAGES = {
         'min_semester_credits': 'Minimum number of credits required'
     }
 }
-if 'HEROKU' in os.environ:
-    # Configure Django App for Heroku.
-    import django_heroku
-
-    django_heroku.settings(locals())
