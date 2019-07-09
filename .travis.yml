@@ -15,3 +15,6 @@ deploy:
   on:
     repo: Joshuacruzc/CurriculumAlgorithm
     all_branches: true
+  run:
+    - "python manage.py makemigrations curriculum_algorithm"
+    - "python manage.py migrate"
