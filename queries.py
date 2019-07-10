@@ -1,6 +1,5 @@
 import psycopg2
 
-from CurriculumAlgorithmWebApp import settings
 from curriculum_algorithm.models import Course
 
 
