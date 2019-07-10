@@ -1,6 +1,6 @@
 import django_heroku
 
-from .settings import *
+from ..settings import *
 
 DEBUG = DEBUG
 DEBUG = False

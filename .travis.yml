@@ -7,9 +7,9 @@ python:
 install:
   - pip install -r requirements.txt
 before_script:
-  - python manage.py makemigrations curriculum_algorithm--settings=CurriculumAlgorithmWebApp.settings.settings
+  - python manage.py makemigrations curriculum_algorithm
 script:
-  - python manage.py test --settings=CurriculumAlgorithmWebApp.settings.settings
+  - python manage.py test
 deploy:
   provider: heroku
   api_key:
@@ -18,6 +18,6 @@ deploy:
   on:
     repo: srcsoftwaredev/CurriculumAlgorithm
   run:
-    - "heroku config:set DJANGO_SETTINGS_MODULE=CurriculumAlgorithmWebApp.settings.production"
-    - "python manage.py makemigrations curriculum_algorithm --settings=CurriculumAlgorithmWebApp.settings.production"
-    - "python manage.py migrate --settings=CurriculumAlgorithmWebApp.settings.production"
+    - "heroku config:set DJANGO_SETTINGS_MODULE=CurriculumAlgorithmWebApp.custom_settings.production"
+    - "python manage.py makemigrations curriculum_algorithm --settings=CurriculumAlgorithmWebApp.custom_settings.production"
+    - "python manage.py migrate --settings=CurriculumAlgorithmWebApp.custom_settings.production"
