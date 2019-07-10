@@ -1,2 +1,5 @@
 psycopg2
 django
+djangorestframework
+django-cors-headers
+gunicorn
