@@ -3,3 +3,5 @@ django
 djangorestframework
 django-cors-headers
 gunicorn
+dj-database-url
+django_heroku
