@@ -1,2 +1,2 @@
 web: gunicorn CurriculumAlgorithmWebApp.wsgi
-release: ./post-deploy.sh
+release: bash ./post-deploy.sh
