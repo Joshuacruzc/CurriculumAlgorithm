@@ -14,7 +14,11 @@ class StudentPlanTestCase(APITestCase):
         return self.client.post(url, data, format='json')
 
     def get_student_plan(self, student_plan_id):
-        url = reverse(f'view_plan', args=(student_plan_id, ))
+        url = reverse('view_plan', args=(student_plan_id,))
+        return self.client.get(url, format='json')
+
+    def accommodate_remaining_courses(self, student_plan_id):
+        url = reverse('build_plan', args=(student_plan_id,))
         return self.client.get(url, format='json')
 
     def test_create_student_plan(self):
@@ -23,7 +27,7 @@ class StudentPlanTestCase(APITestCase):
         """
         import_curriculum('CIIC')
         StudentPlan.objects.all().delete()
-        response = self.post_student_plan(1, 16)
+        response = self.post_student_plan(curriculum_id=1, max_credits=16)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED, 'Server did not return Status Code 201:'
                                                                         ' CREATED.')
         self.assertEqual(StudentPlan.objects.count(), 1, 'Student Plan was not created in database.')
@@ -33,7 +37,7 @@ class StudentPlanTestCase(APITestCase):
         We can retrieve StudentPlan object using API
         """
         import_curriculum('CIIC')
-        response = self.post_student_plan(1, 16)
+        response = self.post_student_plan(curriculum_id=1, max_credits=16)
         student_plan = json.loads(response.content)
         retrieved_student_plan = json.loads(self.get_student_plan(student_plan['id']).content)
         self.assertEqual(student_plan, retrieved_student_plan, 'Student Plan acquired from POST request is different '
@@ -47,3 +51,16 @@ class StudentPlanTestCase(APITestCase):
         self.assertIn('curriculum', retrieved_student_plan.keys(),
                       '"curriculum" not found in GET response content.')
 
+    def test_accommodate_remaining_courses(self):
+        """
+        We can accommodate all remaining courses using "accommodate remaining courses endpoint
+        """
+        import_curriculum('CIIC')
+        StudentPlan.objects.all().delete()
+        response = self.post_student_plan(curriculum_id=1, max_credits=16)
+        created_student_plan = json.loads(response.content)
+        self.assertEqual(0, len(created_student_plan['semester_set']), 'Student Plan that was just created already has'
+                                                                       'semesters.')
+        response = self.accommodate_remaining_courses(student_plan_id=created_student_plan['id'])
+        retrieved_student_plan = json.loads(response.content)
+        self.assertEqual(0, len(retrieved_student_plan['remaining_courses']), 'Courses left without accommodating.')

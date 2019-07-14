@@ -89,8 +89,7 @@ class StudentPlan(models.Model):
 
     def build_plan(self):
         self.semester_set.filter(past=False).delete()
-        for course in CurriculumCourse.objects.filter(curriculum=self.curriculum)\
-                .exclude(semester__in=self.semester_set.all()).order_by('-level'):
+        for course in self.remaining_courses:
             self.accommodate(course)
         return self.semester_set
 
@@ -99,10 +98,10 @@ class StudentPlan(models.Model):
         if not target_semester:
             target_semester = Semester.objects.create(student_plan=self, max_credits=self.max_credits,
                                                       position=position)
-        target_semester.add_curriculum_5course(curriculum_course)
+        target_semester.add_curriculum_course(curriculum_course)
 
     def accommodate(self, curriculum_course, is_co_requisite=False):
-        if curriculum_course in CurriculumCourse.objects.filter(semester__in=self.semester_set.all()):
+        if curriculum_course not in self.remaining_courses:
             return curriculum_course.semester_set.last().position + 1\
                 if not is_co_requisite else curriculum_course.semester_set.last().position
         min_position = 0
@@ -122,6 +121,6 @@ class StudentPlan(models.Model):
                 semester.add_curriculum_course(curriculum_course)
                 return semester.position
         new_semester = Semester.objects.create(student_plan=self, max_credits=self.max_credits,
-                                               position=self.semester_set.count())  # consider using max aggregate
+                                               position=self.semester_set.count())  # TODO: Consider using max aggregate
         new_semester.add_curriculum_course(curriculum_course)
         return new_semester.position
