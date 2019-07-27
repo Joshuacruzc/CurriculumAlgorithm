@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from curriculum_algorithm.models import Curriculum, Course, CurriculumCourse, StudentPlan, Semester
+from curriculum_algorithm.models import Curriculum, CurriculumCourse, StudentPlan, Semester
 
 
 class CurriculumCourseInline(admin.TabularInline):
@@ -24,7 +24,7 @@ class SemesterInline(admin.TabularInline):
 
 @admin.register(StudentPlan)
 class StudentPlanAdmin(admin.ModelAdmin):
-    fields = ['max_credits', 'curriculum']
+    fields = ['max_credits', 'curriculum', 'user']
     inlines = [SemesterInline]
 
     def save_model(self, request, obj, form, change):

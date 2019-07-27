@@ -1,3 +1,4 @@
+from django.contrib.auth import get_user_model
 from django.db import models
 
 POSITION_CHOICES = [
@@ -81,6 +82,7 @@ class Semester(models.Model):
 class StudentPlan(models.Model):
     max_credits = models.IntegerField(default=0)
     curriculum = models.ForeignKey(Curriculum, on_delete=models.SET_NULL, null=True)
+    user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE, null=True)
 
     @property
     def remaining_courses(self):
