@@ -1,3 +1,4 @@
+from django.contrib.auth import get_user_model
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
@@ -8,6 +9,10 @@ from import_curriculum import import_curriculum
 
 
 class StudentPlanTestCase(APITestCase):
+    def setUp(self):
+        user = get_user_model().objects.create(username='test_user', password='test')
+        self.client.force_authenticate(user=user)
+
     def post_student_plan(self, curriculum_id, max_credits):
         url = reverse('create_student_plan')
         data = {'curriculum_id': curriculum_id, 'max_credits': max_credits}

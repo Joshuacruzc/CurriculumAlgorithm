@@ -28,6 +28,7 @@ def transfer_course(request):
 
 
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def accommodate_remaining_courses(request, student_plan_id):
     student_plan = StudentPlan.objects.get(pk=student_plan_id)
     student_plan.build_plan()
@@ -36,6 +37,7 @@ def accommodate_remaining_courses(request, student_plan_id):
 
 class CreateStudentPlanView(generics.CreateAPIView):
     serializer_class = StudentPlanSerializer
+    permission_classes = [IsAuthenticated]
 
     def perform_create(self, serializer):
         extra_data = {}
@@ -45,6 +47,7 @@ class CreateStudentPlanView(generics.CreateAPIView):
 
 
 class SemestersView(generics.ListCreateAPIView):
+    permission_classes = [IsAuthenticated]
     serializer_class = SemesterSerializer
     queryset = Semester.objects.all()
     lookup_field = 'student_plan__id'
