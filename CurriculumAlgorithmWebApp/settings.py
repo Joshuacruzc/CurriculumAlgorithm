@@ -87,8 +87,11 @@ WSGI_APPLICATION = 'CurriculumAlgorithmWebApp.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, '../../db.sqlite3'),
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'postgres',
+        'USER': 'postgres',
+        'HOST': 'db',
+        'PORT': 5432,
     }
 }
 
@@ -153,13 +156,9 @@ REST_FRAMEWORK = {
 }
 
 AUTHENTICATION_BACKENDS = (
-    # Others auth providers (e.g. Google, OpenId, etc)
-    # Facebook OAuth2
+
     'social_core.backends.google.GoogleOAuth2',
-    # 'django-rest-framework-social-oauth2'
-    # 'rest_framework_social_oauth2.backends.DjangoOAuth2',
-    # Django
-    # 'django.contrib.auth.backends.ModelBackend',
+    'django.contrib.auth.backends.ModelBackend',
 
 )
 
