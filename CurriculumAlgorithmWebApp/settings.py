@@ -24,7 +24,7 @@ SECRET_KEY = '8(xg762^kfjmyxsw^d=n)yr59d_f1v&+s%-*6z7$(1#r!*o4p)'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['curriculum-algorithm.herokuapp.com', '127.0.0.1']
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
 
 
 # Application definition

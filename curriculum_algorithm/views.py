@@ -25,6 +25,13 @@ def transfer_course(request):
     return Response(SemesterSerializer(result, many=True).data)
 
 
+@api_view(['GET'])
+def accommodate_remaining_courses(request, student_plan_id):
+    student_plan = StudentPlan.objects.get(pk=student_plan_id)
+    student_plan.build_plan()
+    return Response(StudentPlanSerializer(student_plan).data)
+
+
 class CreateStudentPlanView(generics.CreateAPIView):
     serializer_class = StudentPlanSerializer
 
