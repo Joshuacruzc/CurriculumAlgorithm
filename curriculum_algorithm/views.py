@@ -1,5 +1,6 @@
 from rest_framework import generics
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from curriculum_algorithm.models import Semester, StudentPlan, CurriculumCourse
@@ -7,6 +8,7 @@ from curriculum_algorithm.serializers import StudentPlanSerializer, SemesterSeri
 
 
 @api_view(['POST'])
+@permission_classes([IsAuthenticated])
 def transfer_course(request):
     data = request.POST
     source_semester_pk = data.get('source_semester', None)
@@ -26,6 +28,7 @@ def transfer_course(request):
 
 
 @api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def accommodate_remaining_courses(request, student_plan_id):
     student_plan = StudentPlan.objects.get(pk=student_plan_id)
     student_plan.build_plan()
@@ -34,15 +37,24 @@ def accommodate_remaining_courses(request, student_plan_id):
 
 class CreateStudentPlanView(generics.CreateAPIView):
     serializer_class = StudentPlanSerializer
+    permission_classes = [IsAuthenticated]
+
+    def perform_create(self, serializer):
+        extra_data = {}
+        if 'user' not in serializer.validated_data:
+            extra_data['user'] = self.request.user
+        serializer.save(**extra_data)
 
 
 class SemestersView(generics.ListCreateAPIView):
+    permission_classes = [IsAuthenticated]
     serializer_class = SemesterSerializer
     queryset = Semester.objects.all()
     lookup_field = 'student_plan__id'
 
 
 class RetrieveUpdateStudentPlanView(generics.RetrieveUpdateAPIView):
+    permission_classes = [IsAuthenticated]
     serializer_class = StudentPlanSerializer
     queryset = StudentPlan.objects.all()
     lookup_field = 'pk'
