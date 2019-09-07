@@ -39,7 +39,8 @@ class StudentPlanSerializer(serializers.ModelSerializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
+    plans = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
+
     class Meta:
         model = get_user_model()
-        # TODO: Limit to username, email or other public information
-        fields = '__all__'
+        fields = ('username', 'email', 'first_name', 'last_name', 'id', 'plans')
