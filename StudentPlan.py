@@ -1,4 +1,4 @@
-from import_curriculum import import_curriculum
+from import_curriculum import import_curriculum_local
 
 
 class StudentPlan:
@@ -11,7 +11,7 @@ class StudentPlan:
         if past_semesters is not None:
             for semester_position in range(max(past_semesters.keys())+1):
                 past_semester = self.add_semester(semester_position, past=True)
-                courses_to_add = past_semesters.get(semester_position, None)
+                courses_to_add = past_semesters.get(semester_position, [])
                 for course in courses_to_add:
                     past_semester.add_course(curriculum.get_course(course))
 
@@ -103,13 +103,14 @@ class Semester:
 
 if __name__ == '__main__':
     # Example Use
-    ciic = import_curriculum('CIIC')
+    ciic = import_curriculum_local('CIIC')
     my_past_semesters = {
         0: ['INGL3--1', 'ESPA3101', 'MATE3005', 'INGL3--2', 'ESPA3102'],
         1: ['MATE3031', 'QUIM3131', 'INGL3211', 'INGE3011', 'SOHU1111'],
         2: ['MATE3032', 'QUIM3132', 'CIIC3011', 'EDFI---1', 'EDFI---2'],
         3: ['CIIC5--1', 'CIIC5--2'],
         4: ['CIIC4010', 'CIIC3075', 'INGL3212', 'FREE---1'],
+        5: []
     }
     everson_semester = {
         1: ['MATE3005', 'QUIM3131', 'INGL3--1', 'INGE3011', 'ESPA3101'],
@@ -119,7 +120,7 @@ if __name__ == '__main__':
         5: ['CIIC4020', 'MATE4145', 'INEL3105', 'INGE3035'],
         6: ['CIIC5--1']
     }
-    plan = StudentPlan(curriculum=ciic, max_credits=16, past_semesters=everson_semester)
+    plan = StudentPlan(curriculum=ciic, max_credits=16, past_semesters=my_past_semesters)
     # plan.force_accommodate(6, ciic.get_course('MATE3063'))
     for semester in plan.build_plan():
         print(semester, semester.credit_hours)
