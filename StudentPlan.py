@@ -2,14 +2,14 @@ from import_curriculum import import_curriculum_local
 
 
 class StudentPlan:
-
     semesters = []
+    flags = {}
 
     def __init__(self, curriculum, max_credits, past_semesters=None):
         self.curriculum = curriculum
         self.max_credits = max_credits
         if past_semesters is not None:
-            for semester_position in range(max(past_semesters.keys())+1):
+            for semester_position in range(max(past_semesters.keys()) + 1):
                 past_semester = self.add_semester(semester_position, past=True)
                 courses_to_add = past_semesters.get(semester_position, [])
                 for course in courses_to_add:
@@ -38,9 +38,19 @@ class StudentPlan:
         return semester
 
     def force_accommodate(self, position, course):
-        if not self.get_semester(position):
-            new_semester = self.add_semester(position)
-            new_semester.add_course(course)
+        target = self.get_semester(position)
+        if not target:
+            target = self.add_semester(position)
+        target.add_course(course)
+        self.generate_warnings(course)
+
+    def generate_warnings(self, course):
+        for prereq in course.pre_requisites:
+            if not prereq.position or prereq.position >= course.position:
+                self.flags[course.course_id] = f'prerequisite {prereq.course_id} not met'
+        for correq in course.co_requisites:
+            if not correq.position or course.position > correq.position:
+                self.flags[course.course_id] = f'corequisite {correq.course_id} not met'
 
     def get_semester(self, position):
         for semester in self.semesters:
@@ -50,7 +60,7 @@ class StudentPlan:
     def set_to_earliest_possible_semester(self, course, min_position):
         if not self.get_semester(min_position):
             self.add_semester(position=min_position)
-        self.semesters = sorted(self.semesters, key=lambda s: s.position,)
+        self.semesters = sorted(self.semesters, key=lambda s: s.position, )
         for semester_index in range(min_position, len(self.semesters)):
             if self.semesters[semester_index].course_valid(course):
                 self.semesters[semester_index].add_course(course)
@@ -58,6 +68,13 @@ class StudentPlan:
         semester = self.add_semester(position=len(self.semesters))
         semester.add_course(course)
         return semester.position
+
+    def remove(self, course):
+        position = course.position
+        course.position = None
+        semester = self.get_semester(position)
+        semester.courses.remove(course)
+        self.flags.pop(course.course_id)
 
 
 class Semester:
@@ -89,14 +106,14 @@ class Semester:
         self.is_full = self.credit_hours >= self.max_credits
 
     def get_year(self):
-        return int(self.position/2) if self.position % 2 == 0 else self.position//2 + 1
+        return int(self.position / 2) if self.position % 2 == 0 else self.position // 2 + 1
 
     year = property(get_year)
 
     def __repr__(self):
         if self.position > 0:
-            return f'Semester: year:{ self.year }  semester: {2 if self.position % 2 == 0 else 1},' \
-            f' Courses: {self.courses}'
+            return f'Semester: year:{self.year}  semester: {2 if self.position % 2 == 0 else 1},' \
+                   f' Courses: {self.courses}'
         else:
             return f'Before College: Courses{self.courses}'
 
@@ -110,7 +127,7 @@ if __name__ == '__main__':
         2: ['MATE3032', 'QUIM3132', 'CIIC3011', 'EDFI---1', 'EDFI---2'],
         3: ['CIIC5--1', 'CIIC5--2'],
         4: ['CIIC4010', 'CIIC3075', 'INGL3212', 'FREE---1'],
-        5: []
+        5: ['CIIC4020', 'SOHU1112', 'FISI3171']
     }
     everson_semester = {
         1: ['MATE3005', 'QUIM3131', 'INGL3--1', 'INGE3011', 'ESPA3101'],
@@ -121,6 +138,9 @@ if __name__ == '__main__':
         6: ['CIIC5--1']
     }
     plan = StudentPlan(curriculum=ciic, max_credits=16, past_semesters=my_past_semesters)
-    # plan.force_accommodate(6, ciic.get_course('MATE3063'))
+    plan.force_accommodate(1, ciic.get_course('MATE3063'))
+    # plan.remove(ciic.get_course('MATE3063'))
+    # plan.accommodate(ciic.get_course('MATE3063'))
     for semester in plan.build_plan():
         print(semester, semester.credit_hours)
+    print(plan.flags)
