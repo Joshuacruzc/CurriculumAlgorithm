@@ -2,9 +2,10 @@ from rest_framework import generics
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from curriculum_algorithm.models import Semester, StudentPlan, CurriculumCourse
-from curriculum_algorithm.serializers import StudentPlanSerializer, SemesterSerializer
+from curriculum_algorithm.serializers import StudentPlanSerializer, SemesterSerializer, UserSerializer
 
 
 @api_view(['POST'])
@@ -58,3 +59,12 @@ class RetrieveUpdateStudentPlanView(generics.RetrieveUpdateAPIView):
     serializer_class = StudentPlanSerializer
     queryset = StudentPlan.objects.all()
     lookup_field = 'pk'
+
+
+class CurrentUserView(APIView):
+    serializer_class = UserSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        serializer = self.serializer_class(request.user)
+        return Response(serializer.data)

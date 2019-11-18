@@ -1,3 +1,4 @@
+from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
 from .models import StudentPlan, Semester, CurriculumCourse, Course, PlanWarning
@@ -41,4 +42,11 @@ class StudentPlanSerializer(serializers.ModelSerializer):
     class Meta:
         """Meta class to map serializer's fields with the model fields."""
         model = StudentPlan
+        fields = '__all__'
+
+
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = get_user_model()
+        # TODO: Limit to username, email or other public information
         fields = '__all__'
