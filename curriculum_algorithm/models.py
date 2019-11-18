@@ -8,7 +8,21 @@ POSITION_CHOICES = [
 ]
 
 
-class Course(models.Model):
+class BaseModel(models.Model):
+    class Meta:
+        abstract = True
+
+
+class PlanWarning(BaseModel):
+    PRE_REQUISITE_NOT_MET = "pre-requisite %s not met"
+    CO_REQUISITE_NOT_MET = "co-requisite %s met"
+    MAX_CREDITS_EXCEEDED = "max credits for %s exceeded"
+
+    text = models.CharField(max_length=64)
+    target = models.ForeignKey("StudentPlan", on_delete=models.CASCADE)
+
+
+class Course(BaseModel):
     course_number = models.CharField(max_length=8, unique=True)
     season = models.CharField(max_length=1, choices=POSITION_CHOICES)
     credit_hours = models.IntegerField(default=0)
@@ -18,7 +32,7 @@ class Course(models.Model):
         return self.course_number
 
 
-class Curriculum(models.Model):
+class Curriculum(BaseModel):
     name = models.CharField(max_length=50, unique=True)
     department = models.CharField(max_length=50)
     courses = models.ManyToManyField(Course, through='CurriculumCourse')
@@ -27,7 +41,7 @@ class Curriculum(models.Model):
         return self.name
 
 
-class CurriculumCourse(models.Model):
+class CurriculumCourse(BaseModel):
     course = models.ForeignKey(Course, on_delete=models.CASCADE)
     curriculum = models.ForeignKey(Curriculum, on_delete=models.CASCADE)
     pre_requisites = models.ManyToManyField('self', related_name='bops', symmetrical=False)
@@ -47,7 +61,7 @@ class CurriculumCourse(models.Model):
         return f'{self.curriculum.name}: {self.course.course_number}'
 
 
-class Semester(models.Model):
+class Semester(BaseModel):
     student_plan = models.ForeignKey('StudentPlan', on_delete=models.CASCADE)
     curriculum_courses = models.ManyToManyField(CurriculumCourse)
     is_full = models.BooleanField(default=False)
@@ -68,6 +82,10 @@ class Semester(models.Model):
         self.is_full = self.credit_hours >= self.max_credits
         self.save()
 
+    def remove_curriculum_course(self, course):
+        self.curriculum_courses.remove(course)
+        PlanWarning.objects.filter(target=course).delete()
+
     def course_valid(self, curriculum_course):
         if not self.is_full and not self.past \
                 and self.credit_hours + curriculum_course.get_credit_hours() <= self.max_credits:
@@ -79,7 +97,7 @@ class Semester(models.Model):
                 return True
 
 
-class StudentPlan(models.Model):
+class StudentPlan(BaseModel):
     max_credits = models.IntegerField(default=0)
     curriculum = models.ForeignKey(Curriculum, on_delete=models.SET_NULL, null=True)
     user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE, null=True)
@@ -101,6 +119,27 @@ class StudentPlan(models.Model):
             target_semester = Semester.objects.create(student_plan=self, max_credits=self.max_credits,
                                                       position=position)
         target_semester.add_curriculum_course(curriculum_course)
+        self.generate_warnings(position, curriculum_course)
+
+    @staticmethod
+    def generate_warnings(target_semester, curriculum_course):
+        # Checks if pre_requisites for course are met
+        for pre_requisite in curriculum_course.pre_requisites.all():
+            if not pre_requisite.position or pre_requisite.position >= curriculum_course.position:
+                PlanWarning.objects.create(target=curriculum_course,
+                                           text=PlanWarning.PRE_REQUISITE_NOT_MET % pre_requisite)
+
+        # Checks if co_requisites for course are met
+        for co_requisite in curriculum_course.co_requisites.all():
+            if not co_requisite.position or curriculum_course.position > curriculum_course.position:
+                PlanWarning.objects.create(target=curriculum_course,
+                                           text=PlanWarning.CO_REQUISITE_NOT_MET % co_requisite)
+
+        # Check if semester exceeds maximum credits
+        PlanWarning.objects.filter(target=target_semester).delete()
+        if target_semester.credit_hours > target_semester.max_credits:
+            PlanWarning.objects.create(target=target_semester.student_plan,
+                                       text=PlanWarning.MAX_CREDITS_EXCEEDED % target_semester)
 
     def accommodate(self, curriculum_course, is_co_requisite=False):
         if curriculum_course not in self.remaining_courses:

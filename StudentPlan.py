@@ -42,15 +42,18 @@ class StudentPlan:
         if not target:
             target = self.add_semester(position)
         target.add_course(course)
-        self.generate_warnings(course)
+        self.generate_warnings(course, position)
 
-    def generate_warnings(self, course):
+    def generate_warnings(self, course, position):
         for prereq in course.pre_requisites:
             if not prereq.position or prereq.position >= course.position:
                 self.flags[course.course_id] = f'prerequisite {prereq.course_id} not met'
         for correq in course.co_requisites:
             if not correq.position or course.position > correq.position:
-                self.flags[course.course_id] = f'corequisite {correq.course_id} not met'
+                self.flags[course.course_id] = f'co-requisite {correq.course_id} not met'
+        target_semester = self.get_semester(position)
+        if target_semester.credit_hours > target_semester.max_credits:
+            self.flags[f'Semester {target_semester.position}'] = f"Max credits exceeded in {target_semester}"
 
     def get_semester(self, position):
         for semester in self.semesters:
@@ -139,6 +142,7 @@ if __name__ == '__main__':
     }
     plan = StudentPlan(curriculum=ciic, max_credits=16, past_semesters=my_past_semesters)
     plan.force_accommodate(1, ciic.get_course('MATE3063'))
+    plan.force_accommodate(1, ciic.get_course('INEL3105'))
     # plan.remove(ciic.get_course('MATE3063'))
     # plan.accommodate(ciic.get_course('MATE3063'))
     for semester in plan.build_plan():

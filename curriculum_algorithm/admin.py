@@ -4,7 +4,7 @@ from curriculum_algorithm.models import Curriculum, CurriculumCourse, StudentPla
 
 
 class CurriculumCourseInline(admin.TabularInline):
-    fields = ['course', 'pre_requisites', 'co_requisites']
+    fields = ['course', 'pre_requisites', 'co_requisites', 'plan_warnings']
     fk_name = 'curriculum'
     model = CurriculumCourse
 
@@ -16,7 +16,7 @@ class CurriculumAdmin(admin.ModelAdmin):
 
 
 class SemesterInline(admin.TabularInline):
-    fields = ['curriculum_courses', 'credit_hours', 'position',  'past']
+    fields = ['curriculum_courses', 'credit_hours', 'position', 'past', 'plan_warnings']
     fk_name = 'student_plan'
     model = Semester
     extra = 0

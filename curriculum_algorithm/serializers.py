@@ -1,5 +1,12 @@
 from rest_framework import serializers
-from .models import StudentPlan, Semester, CurriculumCourse, Course
+
+from .models import StudentPlan, Semester, CurriculumCourse, Course, PlanWarning
+
+
+class PlanWarningSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PlanWarning
+        fields = ['text']
 
 
 class CourseSerializer(serializers.ModelSerializer):
@@ -29,6 +36,7 @@ class StudentPlanSerializer(serializers.ModelSerializer):
     """Serializer to map the Model instance into JSON format."""
     semester_set = SemesterSerializer(many=True, read_only=True)
     remaining_courses = CurriculumCourseSerializer(many=True, read_only=True)
+    plan_warnings = PlanWarningSerializer(many=True)
 
     class Meta:
         """Meta class to map serializer's fields with the model fields."""
