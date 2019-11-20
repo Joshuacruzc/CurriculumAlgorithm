@@ -22,9 +22,9 @@ def transfer_course(request):
         updated_semesters.append(source_semester_pk)
     if destination_semester_pk is not None:
         new_semester = Semester.objects.get(pk=data['new_semester'])
-        new_semester.student_plan.force_accommodate(new_semester, course)
+        new_semester.student_plan.force_accommodate(new_semester.position, course)
         updated_semesters.append(destination_semester_pk)
-    result = Semester.objects.filter(id__in=updated_semesters)
+    result = Semester.objects.all()
     return Response(SemesterSerializer(result, many=True).data)
 
 

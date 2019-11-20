@@ -16,7 +16,7 @@ class CurriculumAdmin(admin.ModelAdmin):
 
 
 class SemesterInline(admin.TabularInline):
-    fields = ['curriculum_courses', 'credit_hours', 'position', 'past', 'plan_warnings']
+    fields = ['curriculum_courses', 'credit_hours', 'position', 'past']
     fk_name = 'student_plan'
     model = Semester
     extra = 0
