@@ -1,8 +1,9 @@
 from Course import Course
 from Curriculum import Curriculum
-from curriculum_algorithm.models import Course as CurriculumCourseModel
+from curriculum_algorithm.models import Course as CourseModel
 from curriculum_algorithm.models import Curriculum as CurriculumModel
-from curriculum_algorithm.models import CurriculumCourse as CourseModel
+from curriculum_algorithm.models import \
+    CurriculumCourse as CurriculumCourseModel
 
 
 def import_curriculum(name):
