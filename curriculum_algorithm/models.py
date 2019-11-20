@@ -28,7 +28,9 @@ class Course(BaseModel):
     course_number = models.CharField(max_length=8, unique=True)
     season = models.CharField(max_length=1, choices=POSITION_CHOICES)
     credit_hours = models.IntegerField(default=0)
-    laboratory = models.ForeignKey('Course', null=True, on_delete=models.SET_NULL, related_name='main_course')
+    laboratory = models.ForeignKey('Course', null=True,
+                                   on_delete=models.SET_NULL,
+                                   related_name='main_course')
 
     def __str__(self):
         return self.course_number
@@ -46,8 +48,10 @@ class Curriculum(BaseModel):
 class CurriculumCourse(BaseModel):
     course = models.ForeignKey(Course, on_delete=models.CASCADE)
     curriculum = models.ForeignKey(Curriculum, on_delete=models.CASCADE)
-    pre_requisites = models.ManyToManyField('self', related_name='unlocked', symmetrical=False)
-    co_requisites = models.ManyToManyField("self", related_name='co_unlocked', symmetrical=False)
+    pre_requisites = models.ManyToManyField('self', related_name='unlocked',
+                                            symmetrical=False)
+    co_requisites = models.ManyToManyField("self", related_name='co_unlocked',
+                                           symmetrical=False)
     level = models.IntegerField(default=0)
     plan_warnings = models.ManyToManyField(PlanWarning)
 
@@ -66,20 +70,24 @@ class CurriculumCourse(BaseModel):
 
         # Checks if pre_requisites for course are met
         for pre_requisite in self.pre_requisites.all():
-            if not pre_requisite.position or pre_requisite.position >= self.position:
-                warning = PlanWarning.objects.create(text=PlanWarning.PRE_REQUISITE_NOT_MET % pre_requisite)
+            if not pre_requisite.position or \
+                    pre_requisite.position >= self.position:
+                warning = PlanWarning.objects.create(
+                    text=PlanWarning.PRE_REQUISITE_NOT_MET % pre_requisite)
                 self.plan_warnings.add(warning)
 
         # Checks if co_requisites for course are met
         for co_requisite in self.co_requisites.all():
             if not co_requisite.position or self.position > self.position:
-                warning = PlanWarning.objects.create(text=PlanWarning.CO_REQUISITE_NOT_MET % co_requisite)
+                warning = PlanWarning.objects.create(
+                    text=PlanWarning.CO_REQUISITE_NOT_MET % co_requisite)
                 self.plan_warnings.add(warning)
         # Generates warnings for all courses who depend on this one
         for curriculum_course in (self.unlocked.all() | self.unlocked.all()):
             curriculum_course.generate_warnings()
 
-    def get_credit_hours(self):
+    @property
+    def credit_hours(self):
         return self.course.credit_hours + self.course.laboratory.credit_hours \
             if self.course.laboratory else self.course.credit_hours
 
@@ -99,16 +107,22 @@ class Semester(BaseModel):
 
     @property
     def year(self):
-        return int(self.position / 2) if self.position % 2 == 0 else self.position // 2 + 1
+        if self.position % 2 == 0:
+            year = int(self.position / 2)
+        else:
+            year = self.position // 2 + 1
+        return year
 
     def __str__(self):
-        return f'Semester: year:{self.year}  semester: {2 if self.position % 2 == 0 else 1}'
+        return f'Semester: year:{self.year}' \
+               f'  semester: {2 if self.position % 2 == 0 else 1}'
 
     def add_curriculum_course(self, curriculum_course):
         self.curriculum_courses.add(curriculum_course)
         if curriculum_course.course.laboratory:
-            self.curriculum_courses.add(CurriculumCourse.objects.get(course=curriculum_course.course.laboratory))
-        self.credit_hours += curriculum_course.get_credit_hours()
+            self.curriculum_courses.add(CurriculumCourse.objects.get(
+                course=curriculum_course.course.laboratory))
+        self.credit_hours += curriculum_course.credit_hours
         self.is_full = self.credit_hours >= self.max_credits
         self.save()
 
@@ -118,7 +132,8 @@ class Semester(BaseModel):
 
         # Check if semester exceeds maximum credits
         if self.credit_hours > self.max_credits:
-            warning = PlanWarning.objects.create(text=PlanWarning.MAX_CREDITS_EXCEEDED % self)
+            warning = PlanWarning.objects.create(
+                text=PlanWarning.MAX_CREDITS_EXCEEDED % self)
             self.plan_warnings.add(warning)
 
     def remove_curriculum_course(self, course):
@@ -128,7 +143,8 @@ class Semester(BaseModel):
 
     def course_valid(self, curriculum_course):
         if not self.is_full and not self.past \
-                and self.credit_hours + curriculum_course.get_credit_hours() <= self.max_credits:
+                and self.credit_hours \
+                + curriculum_course.credit_hours <= self.max_credits:
             if curriculum_course.course.season == 2:
                 return self.position % 2 == 0
             elif curriculum_course.course.season == 1:
@@ -139,13 +155,16 @@ class Semester(BaseModel):
 
 class StudentPlan(BaseModel):
     max_credits = models.IntegerField(default=0)
-    curriculum = models.ForeignKey(Curriculum, on_delete=models.SET_NULL, null=True)
-    user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE, null=True)
+    curriculum = models.ForeignKey(Curriculum, on_delete=models.SET_NULL,
+                                   null=True)
+    user = models.ForeignKey(get_user_model(), on_delete=models.CASCADE,
+                             null=True)
 
     @property
     def remaining_courses(self):
-        return CurriculumCourse.objects.filter(curriculum=self.curriculum)\
-                .exclude(semester__in=self.semester_set.all()).order_by('-level')
+        return CurriculumCourse.objects.filter(curriculum=self.curriculum) \
+            .exclude(semester__in=self.semester_set.all()) \
+            .order_by('-level')
 
     def build_plan(self):
         self.semester_set.filter(past=False).delete()
@@ -156,33 +175,46 @@ class StudentPlan(BaseModel):
     def force_accommodate(self, position, curriculum_course):
         target_semester = self.semester_set.filter(position=position).first()
         if not target_semester:
-            target_semester = Semester.objects.create(student_plan=self, max_credits=self.max_credits,
-                                                      position=position)
+            target_semester = Semester.objects.create(
+                student_plan=self,
+                max_credits=self.max_credits,
+                position=position)
         target_semester.add_curriculum_course(curriculum_course)
         curriculum_course.generate_warnings()
         target_semester.generate_warnings()
 
     def accommodate(self, curriculum_course, is_co_requisite=False):
         if curriculum_course not in self.remaining_courses:
-            return curriculum_course.semester_set.last().position + 1\
-                if not is_co_requisite else curriculum_course.semester_set.last().position
+            return curriculum_course.semester_set.last().position + 1 \
+                if not is_co_requisite \
+                else curriculum_course.semester_set.last().position
         min_position = 1
         for pre_requisite in curriculum_course.pre_requisites.all():
             min_position = max(min_position, self.accommodate(pre_requisite))
         for co_requisite in curriculum_course.co_requisites.all():
-            min_position = max(min_position, self.accommodate(co_requisite, is_co_requisite=True))
-        min_position = self.set_to_earliest_possible_semester(min_position=min_position,
-                                                              curriculum_course=curriculum_course)
+            min_position = max(min_position, self.accommodate(
+                co_requisite,
+                is_co_requisite=True))
+        min_position = self.set_to_earliest_possible_semester(
+            min_position=min_position,
+            curriculum_course=curriculum_course)
         return min_position + 1 if not is_co_requisite else min_position
 
-    def set_to_earliest_possible_semester(self, curriculum_course, min_position):
+    def set_to_earliest_possible_semester(self, curriculum_course,
+                                          min_position):
         if not self.semester_set.filter(position=min_position).exists():
-            Semester.objects.create(student_plan=self, max_credits=self.max_credits, position=min_position)
-        for semester in self.semester_set.filter(position__gte=min_position).order_by('position'):
+            Semester.objects.create(student_plan=self,
+                                    max_credits=self.max_credits,
+                                    position=min_position)
+        for semester in self.semester_set.filter(
+                position__gte=min_position).order_by('position'):
             if semester.course_valid(curriculum_course):
                 semester.add_curriculum_course(curriculum_course)
                 return semester.position
-        new_semester = Semester.objects.create(student_plan=self, max_credits=self.max_credits,
-                                               position=self.semester_set.count())  # TODO: Consider using max aggregate
+        # TODO: Consider using max aggregate
+        new_semester = Semester.objects.create(
+            student_plan=self,
+            max_credits=self.max_credits,
+            position=self.semester_set.count())
         new_semester.add_curriculum_course(curriculum_course)
         return new_semester.position
