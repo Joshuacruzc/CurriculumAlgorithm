@@ -1,6 +1,5 @@
 from pyspark.sql import SparkSession
 import pandas
-from pyspark.sql.dataframe import DataFrame
 
 spark = SparkSession.builder.appName("Test").getOrCreate()
 
@@ -29,9 +28,10 @@ for file_name in file_names:
 joined = data_frames[0]
 count = 0
 for index in range(1, len(data_frames)):
-    joined = joined.join(data_frames[index], on=["CURSO"], how='inner')
+    joined = joined.join(data_frames[index], on=["CURSO"], how='left')
     count += 1
 
+joined = joined.na.fill(0)
 joined = joined.withColumn("avg_avg", sum(joined[col] for col in joined.columns if "avg" in col)/len(data_frames))
 
-joined.show()
+joined.toPandas().to_csv('avg_avg.csv')
