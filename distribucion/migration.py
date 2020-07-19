@@ -4,7 +4,7 @@ import pandas
 spark = SparkSession.builder.appName("Test").getOrCreate()
 
 sheets = ['SEM-1', 'SEM-2']
-file_names = ['notas_2019-2020.xlsx', 'notas_2017-2018-2.xlsx', 'notas_2016-2017-2.xls']
+file_names = ['notas_2019-2020.xlsx', 'notas_2017-2018-2.xlsx']
 
 data_frames = []
 
@@ -15,8 +15,8 @@ for file_name in file_names:
         pandas_frame = pandas.read_excel(file_name, sheet_name=sheet, inferSchema='true')
         data_frame = spark.createDataFrame(pandas_frame)
         data_frame = data_frame.replace(float('nan'), 0)
-        grades = data_frame.select('CURSO', 'A', 'B', 'C', 'D', 'F', 'W', 'TOTAL').groupBy('CURSO').sum()
-        grades = grades.withColumn(f"avg_{count}", (grades["sum(A)"]*4 + grades["sum(B)"]*3 + grades["sum(C)"]*2 + grades["sum(D)"]*1)/grades["sum(TOTAL)"])
+        grades = data_frame.select("CURSO", "A", "B", "C", "D", "F", "IA", "IB", "IC", "ID", "IF", "TOTAL").groupBy('CURSO').sum()
+        grades = grades.withColumn(f"avg_{count}", (grades["sum(A)"]*4 + grades["sum(B)"]*3 + grades["sum(C)"]*2 + grades["sum(D)"]*1)/(grades["sum(TOTAL)"] - grades["sum(IA)"] - grades["sum(IB)"] - grades["sum(IC)"] - grades["sum(ID)"] - grades["sum(IF)"]))
 
         grades = grades.withColumnRenamed('sum(A)', f'A_{count}').withColumnRenamed('sum(B)', f'B_{count}').\
             withColumnRenamed('sum(C)', f'C_{count}').withColumnRenamed('sum(D)', f'D_{count}').\
