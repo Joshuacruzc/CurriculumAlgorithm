@@ -13,6 +13,8 @@ https://docs.djangoproject.com/en/2.2/ref/settings/
 import os
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
+from django.utils.module_loading import import_string
+
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # Quick-start development custom_settings - unsuitable for production
@@ -134,7 +136,7 @@ STATIC_URL = '/static/'
 
 ERROR_MESSAGES = {
     'semester_credits': {
-        'max_semester_credits': 'Maximun number of credits reached',
+        'max_semester_credits': 'Maximum number of credits reached',
         'min_semester_credits': 'Minimum number of credits required'
     }
 }

@@ -41,7 +41,7 @@ class StudentPlan:
                                 position=position,
                                 past=past)
         self.semesters.append(new_semester)
-        return semester
+        return new_semester
 
     def force_accommodate(self, position, course):
         target = self.get_semester(position)
@@ -147,10 +147,11 @@ if __name__ == '__main__':
     my_past_semesters = {
         0: ['INGL3--1', 'ESPA3101', 'MATE3005', 'INGL3--2', 'ESPA3102'],
         1: ['MATE3031', 'QUIM3131', 'INGL3211', 'INGE3011', 'SOHU1111'],
-        2: ['MATE3032', 'QUIM3132', 'CIIC3011', 'EDFI---1', 'EDFI---2'],
-        3: ['CIIC5--1', 'CIIC5--2'],
-        4: ['CIIC4010', 'CIIC3075', 'INGL3212', 'FREE---1'],
-        5: ['CIIC4020', 'SOHU1112', 'FISI3171']
+        2: ['MATE3032', 'QUIM3132', 'CIIC3011', 'EDFI---1', 'EDFI---2', 'CIIC5--1', 'CIIC5--2'],
+        3: ['CIIC4010', 'CIIC3075', 'INGL3212', 'FREE---1'],
+        4: ['CIIC4020', 'SOHU1112', 'FISI3171'],
+        5: ['CIIC4025', 'INEL3105', 'FISI3172', 'MATE3063'],
+        6: ['CIIC4030', 'CIIC3081', 'CIIC5045', 'MATE4145', 'SOHU1113']
     }
     everson_semester = {
         1: ['MATE3005', 'QUIM3131', 'INGL3--1', 'INGE3011', 'ESPA3101'],
@@ -163,10 +164,11 @@ if __name__ == '__main__':
     }
     plan = StudentPlan(curriculum=ciic, max_credits=16,
                        past_semesters=my_past_semesters)
-    plan.force_accommodate(1, ciic.get_course('MATE3063'))
-    plan.force_accommodate(1, ciic.get_course('INEL3105'))
     # plan.remove(ciic.get_course('MATE3063'))
     # plan.accommodate(ciic.get_course('MATE3063'))
+    # plan.force_accommodate(9, ciic.get_course("CIIC4082"))
+    # plan.force_accommodate(11, ciic.get_course("CIIC4070"))
+    # plan.force_accommodate(11, ciic.get_course("CIIC5995"))
     for semester in plan.build_plan():
         print(semester, semester.credit_hours)
     print(plan.flags)

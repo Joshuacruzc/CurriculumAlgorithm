@@ -1,3 +1,9 @@
+import os
+
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "CurriculumAlgorithmWebApp.settings")
+import django
+
+django.setup()
 from Course import Course
 from Curriculum import Curriculum
 from curriculum_algorithm.models import Course as CourseModel
