@@ -35,3 +35,4 @@ joined = joined.na.fill(0)
 joined = joined.withColumn("avg_avg", sum(joined[col] for col in joined.columns if "avg" in col)/len(data_frames))
 
 joined.toPandas().to_csv('avg_avg.csv')
+
