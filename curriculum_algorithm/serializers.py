@@ -50,5 +50,4 @@ class StudentPlanSerializer(serializers.ModelSerializer):
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = get_user_model()
-        # TODO: Limit to username, email or other public information
-        fields = '__all__'
+        fields = ['username', 'email']
