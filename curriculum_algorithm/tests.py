@@ -24,6 +24,10 @@ class CARequestsMixin:
         url = reverse('build_plan', args=(student_plan_id,))
         return self.client.get(url, format='json')
 
+    def get_user_info(self):
+        url = reverse('get_current_user')
+        return self.client.get(url, format='json')
+
 
 class StudentPlanTestCase(CARequestsMixin, APITestCase):
     def setUp(self):
@@ -89,12 +93,11 @@ class AuthenticationTestCase(CARequestsMixin, APITestCase):
         """
         We can retrieve User info using API
         """
-        url = reverse('get_current_user')
+
         user = get_user_model().objects.create(username='test_user',
                                                password='test')
-
         self.client.force_authenticate(user=user)
-        response = self.client.get(url, format='json')
+        response = self.get_user_info()
         data = json.loads(response.content)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK,
@@ -102,6 +105,14 @@ class AuthenticationTestCase(CARequestsMixin, APITestCase):
         self.assertEqual(data['username'], user.username)
 
     def test_unauthorized_requests(self):
-        # TODO: Test all endpoints that require authentication
+        """
+        Verifies that no endpoint can be accessed without authentication
+        """
         response = self.post_student_plan(curriculum_id=1, max_credits=16)
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED, 'Server did not return Status Code: 401')
+        response = self.get_student_plan(student_plan_id=1)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED, 'Server did not return Status Code: 401')
+        response = self.accommodate_remaining_courses(student_plan_id=1)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED, 'Server did not return Status Code: 401')
+        response = self.get_user_info()
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED, 'Server did not return Status Code: 401')
