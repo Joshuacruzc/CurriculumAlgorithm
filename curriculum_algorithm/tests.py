@@ -97,7 +97,6 @@ class AuthenticationTestCase(CARequestsMixin, APITestCase):
     def test_unauthorized_requests(self):
         """
         Verifies that no endpoint can be accessed without authentication
-        :return:
         """
         response = self.post_student_plan(curriculum_id=1, max_credits=16)
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED, 'Server did not return Status Code: 401')
