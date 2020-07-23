@@ -1,15 +1,16 @@
 from rest_framework import generics
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from CurriculumAlgorithmWebApp.utils import get_permission_class
 from curriculum_algorithm.models import Semester, StudentPlan, CurriculumCourse
-from curriculum_algorithm.serializers import StudentPlanSerializer, SemesterSerializer, UserSerializer
+from curriculum_algorithm.serializers import StudentPlanSerializer, \
+    SemesterSerializer, UserSerializer
 
 
 @api_view(['POST'])
-@permission_classes([IsAuthenticated])
+@permission_classes([get_permission_class()])
 def transfer_course(request):
     data = request.POST
     source_semester_pk = data.get('source_semester', None)
@@ -18,18 +19,20 @@ def transfer_course(request):
     updated_semesters = []
     if source_semester_pk is not None:
         source_semester = Semester.objects.get(pk=source_semester_pk)
-        source_semester.curriculum_courses.remove(course)
+        source_semester.remove_curriculum_course(course)
         updated_semesters.append(source_semester_pk)
     if destination_semester_pk is not None:
         new_semester = Semester.objects.get(pk=data['new_semester'])
-        new_semester.curriculum_courses.add(course)
+        new_semester.student_plan.force_accommodate(
+            new_semester.position,
+            course)
         updated_semesters.append(destination_semester_pk)
-    result = Semester.objects.filter(id__in=updated_semesters)
+    result = Semester.objects.all()
     return Response(SemesterSerializer(result, many=True).data)
 
 
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
+@permission_classes([get_permission_class()])
 def accommodate_remaining_courses(request, student_plan_id):
     student_plan = StudentPlan.objects.get(pk=student_plan_id)
     student_plan.build_plan()
@@ -38,7 +41,7 @@ def accommodate_remaining_courses(request, student_plan_id):
 
 class CreateStudentPlanView(generics.CreateAPIView):
     serializer_class = StudentPlanSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [get_permission_class()]
 
     def perform_create(self, serializer):
         extra_data = {}
@@ -48,14 +51,14 @@ class CreateStudentPlanView(generics.CreateAPIView):
 
 
 class SemestersView(generics.ListCreateAPIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [get_permission_class()]
     serializer_class = SemesterSerializer
     queryset = Semester.objects.all()
     lookup_field = 'student_plan__id'
 
 
 class RetrieveUpdateStudentPlanView(generics.RetrieveUpdateAPIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [get_permission_class()]
     serializer_class = StudentPlanSerializer
     queryset = StudentPlan.objects.all()
     lookup_field = 'pk'
@@ -63,7 +66,7 @@ class RetrieveUpdateStudentPlanView(generics.RetrieveUpdateAPIView):
 
 class CurrentUserView(APIView):
     serializer_class = UserSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [get_permission_class()]
 
     def get(self, request):
         serializer = self.serializer_class(request.user)

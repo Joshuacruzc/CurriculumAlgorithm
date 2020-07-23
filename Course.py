@@ -1,6 +1,7 @@
 class Course:
 
-    def __init__(self, credit_hours, department, code, pre_requisites=None, co_requisites=None, season=None):
+    def __init__(self, credit_hours, department, code, pre_requisites=None,
+                 co_requisites=None, season=None):
         self.course_id = department + code
         self.credit_hours = credit_hours
         self.department = department

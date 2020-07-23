@@ -1,7 +1,14 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
-from .models import StudentPlan, Semester, CurriculumCourse, Course
+from .models import StudentPlan, Semester, CurriculumCourse, Course, \
+    PlanWarning
+
+
+class PlanWarningSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PlanWarning
+        fields = ['text']
 
 
 class CourseSerializer(serializers.ModelSerializer):
@@ -13,6 +20,7 @@ class CourseSerializer(serializers.ModelSerializer):
 
 class CurriculumCourseSerializer(serializers.ModelSerializer):
     course = CourseSerializer()
+    plan_warnings = PlanWarningSerializer(many=True)
 
     class Meta:
         model = CurriculumCourse
@@ -21,6 +29,7 @@ class CurriculumCourseSerializer(serializers.ModelSerializer):
 
 class SemesterSerializer(serializers.ModelSerializer):
     curriculum_courses = CurriculumCourseSerializer(many=True)
+    plan_warnings = PlanWarningSerializer(many=True)
 
     class Meta:
         model = Semester
